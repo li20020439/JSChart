@@ -58,7 +58,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Index.html" />
-    <Content Include="JS\Config.js" />
     <Content Include="JS\JSChart.js" />
     <Content Include="Web.config" />
   </ItemGroup>
