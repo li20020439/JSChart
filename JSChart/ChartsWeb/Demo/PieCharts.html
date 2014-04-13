@@ -1,0 +1,21 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title></title>
+    <script src="../JS/JSChart.js"></script>
+</head>
+<body>
+    <div id="txtDiv">
+        <h1>请用牛X的浏览器运行</h1>
+        <h2>第一次接触Canvas,请不要使用砖块！</h2>
+    </div>
+    <div id="div2"></div>
+    <script type="text/javascript">
+        var config={data:{"第一季度":400,"第二季度":450,"第三季度":480,"第四季度":510}}
+        JSChart.Get("txtDiv", "PieCharts", config);
+        var config2 = { data: { "第一季度": 400, "第二季度": 400, "第三季度": 400, "第四季度": 400 } }
+        JSChart.Get("div2", "PieCharts", config2);
+    </script>
+</body>
+</html>
