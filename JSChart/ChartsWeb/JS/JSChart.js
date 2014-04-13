@@ -22,7 +22,7 @@
         _titleheight: 40,
         _titlefont: "20px Arial",
         _font: "12px Arial",
-        _windth: 600,
+        _width: 600,
         _height: 400,
 
         PieCharts: function (containerid, config) {
@@ -30,16 +30,17 @@
                 colors: _JSChart._defaultcolors,
                 style: "default",
                 titleheight: _JSChart._titleheight,
-                titlefont: this._titlefont,
+                titlefont: _JSChart._titlefont,
                 font: _JSChart._font,
-                windth: _JSChart._windth,
+                width: _JSChart._width,
                 height: _JSChart._height,
-                outlinelong: 20
+                outlinelong: 50,
+                title: "",
             };
             this.config = config;
             this.containerid = containerid;
             this.settings = {
-                windth: 0,
+                width: 0,
                 height: 0,
                 data: {},
                 style: "",
@@ -54,6 +55,7 @@
             };
             this.canvas = null;
             this.drawdata = [];
+            this.drawstrs = [];
             this.starts = [];
             this.outpoints = [];
             this.currentpart = -1;
@@ -74,7 +76,7 @@
                 else if (!!!oldcenter || !!!oldcenter.x || !!!oldcenter.y) {
                     var fontheight = (Number(self.settings.font.substring(0, self.settings.font.indexOf("px"))) + 5) * 2;
                     oldcenter = {
-                        x: Math.floor(self.settings.windth / 2),
+                        x: Math.floor(self.settings.width / 2),
                         y: Math.floor(self.settings.titleheight + (self.settings.height - self.settings.titleheight) / 2)
                     };
                     self.settings.centerpoint = oldcenter;
@@ -119,13 +121,16 @@
                     }
                 }
                 var drawdata = [];
+                var drawstrs = [];
                 drawdata.push(0);
                 var currentval = 0;
                 for (var attr in data) {
                     currentval += data[attr];
                     drawdata.push(Math.PI * 2 * currentval / sum);
+                    drawstrs.push(attr + ":" + data[attr]);
                 }
                 self.drawdata = drawdata;
+                self.drawstrs = drawstrs;
             }
             else if (!!!self.settings.data) {
                 throw "DataErr";
@@ -168,7 +173,58 @@
             if (!!self._Init[self.settings.style]) {
                 self._Init[self.settings.style](self);
             }
+            self.config = null;
+        },
+        _Draw: {
+            default: function (self) {
+                var settings = self.settings;
+                var ctx = self.canvas.getContext("2d");
+                ctx.clearRect(0, 0, settings.width, settings.height);
+                ctx.translate(0, 0);
+                if (!!settings.title) {
+                    ctx.font = settings.titlefont;
+                    ctx.textAlign = "center";
+                    ctx.fillText(settings.title, settings.width / 2, settings.titleheight);
 
+                }
+                var outpoints = self.outpoints;
+                ctx.beginPath();
+                ctx.font = settings.font;
+                ctx.textAlign = "left";
+                var charheight = Number(self.settings.font.substring(0, self.settings.font.indexOf("px"))) + 5;
+                for (var index = 0; index < outpoints.length; index++) {
+                    ctx.moveTo(outpoints[index].start.x, outpoints[index].start.y);
+                    ctx.lineTo(outpoints[index].end.x, outpoints[index].end.y);
+                    ctx.lineTo(outpoints[index].end.x + 60, outpoints[index].end.y)
+                    ctx.stroke();
+                    var texty = outpoints[index].end.y - 5;
+                    if (outpoints[index].start.y < outpoints[index].end.y) {
+                        texty = outpoints[index].end.y + charheight;
+                    }
+                    ctx.fillText(self.drawstrs[index], outpoints[index].end.x, texty);
+                }
+                for (var index = 1; index < self.drawdata.length; index++) {
+                    if (index - 1 != self.currentpart) {
+                        ctx.beginPath();
+                        ctx.fillStyle = settings.colors[index - 1];
+                        ctx.moveTo(settings.centerpoint.x, settings.centerpoint.y)
+                        ctx.arc(settings.centerpoint.x, settings.centerpoint.y, settings.radii, self.drawdata[index - 1], self.drawdata[index]);
+                        ctx.fill();
+                    }
+                }
+                
+            },
+            classics: function (self) {
+
+            }
+        },
+        Draw: function () {
+            var self = this;
+            self.canvas.width = self.settings.width;
+            self.canvas.height = self.settings.height;
+            if (!!self._Draw[self.settings.style]) {
+                self._Draw[self.settings.style](self);
+            }
         }
     };
     var JSChart = window.JSChart = {
@@ -182,6 +238,7 @@
                 if (!!_JSChart[mode]) {
                     var chart = new _JSChart[mode](containerid, config);
                     chart.Init();
+                    chart.Draw();
                     self.Charts[containerid] = chart;
                     return chart;
                 }
