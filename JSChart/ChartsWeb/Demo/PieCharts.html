@@ -6,19 +6,26 @@
     <script src="../JS/JSChart.js"></script>
 </head>
 <body>
-    <div id="txtDiv">
+    <div>
+        <textarea style="width:100%; min-height:40px;">
+            var config = { data: { "第一季度": 400, "第二季度": 450, "第三季度": 480, "第四季度": 510 }, title: "2010年各季度统计" };
+            JSChart.Get("chart1", "PieCharts", config);
+        </textarea>
     </div>
-    <input type="button" value="点击切换" id="btn1" />
+    <div id="chart1">
+    </div>
+    <div>
+        <textarea style="width:100%; min-height:40px;">
+            var config2 = { data: { "第一季度": 400, "第二季度": 400, "第三季度": 400, "第四季度": 400 }, title: "2011年各季度统计", style: "classics" };
+            JSChart.Get("chart2", "PieCharts", config2);
+        </textarea>
+    </div>
+    <div id="chart2"></div>
     <script type="text/javascript">
         var config = { data: { "第一季度": 400, "第二季度": 450, "第三季度": 480, "第四季度": 510 }, title: "2010年各季度统计" };
-        JSChart.Get("txtDiv", "PieCharts", config);
-        var btn = document.getElementById("btn1");
-        btn.addEventListener("click", function () {
-            var config2 = { data: { "第一季度": 400, "第二季度": 400, "第三季度": 400, "第四季度": 400 }, title: "2011年各季度统计" };
-            JSChart.Redraw("txtDiv", config2);
-        })
-
-
+        JSChart.Get("chart1", "PieCharts", config);
+        var config2 = { data: { "第一季度": 400, "第二季度": 400, "第三季度": 400, "第四季度": 400 }, title: "2011年各季度统计", style: "classics" };
+        JSChart.Get("chart2", "PieCharts", config2);
     </script>
 </body>
 </html>

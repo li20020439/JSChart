@@ -93,8 +93,9 @@
                     self.settings.radii = self.config.radii;
                 }
                 else if (!!!self.settings.radii) {
-                    var redii = Math.floor((self.settings.height - self.settings.titleheight - fontheight - self.settings.outlinelong * 2) / 2);
-                    self.settings.radii = redii;
+                    var ymax = Math.floor((self.settings.height - self.settings.titleheight - fontheight * 2 - self.settings.outlinelong * 2) / 2);
+                    var xmax = Math.floor((self.settings.width - self.settings.outlinelong * 2 - 100) / 2);
+                    self.settings.radii = Math.min(xmax, ymax);
                 }
                 //求指示线的点集合
                 var outpoints = [];
@@ -113,7 +114,47 @@
                 }
                 self.outpoints = outpoints;
             },
-            classics: function (self) { },
+            classics: function (self) {
+                var fontheight = Number(self.settings.font.substring(0, self.settings.font.indexOf("px"))) + 5;
+                //求外部文本的最大长度
+                var outlinelong = 0;
+                for (var attr in self.settings.data) {
+                    var textlong = (attr.length + 2) * fontheight;
+                    outlinelong = Math.max(outlinelong, textlong);
+                }
+                self.settings.outlinelong = outlinelong;
+                var newcenter = self.config.centerpoint;
+                var oldcenter = self.settings.centerpoint;
+                if (!!newcenter && !!newcenter.x && !!newcenter.y) {
+                    self.settings.centerpoint = newcenter;
+                }
+                else if (!!!oldcenter || !!!oldcenter.x || !!!oldcenter.y) {
+                    oldcenter = {
+                        x: Math.floor((self.settings.width - self.settings.outlinelong) / 2),
+                        y: Math.floor(self.settings.titleheight + (self.settings.height - self.settings.titleheight) / 2)
+                    };
+                    self.settings.centerpoint = oldcenter;
+                }
+                //求饼状图的半径
+                if (!!self.config.radii) {
+                    self.settings.radii = self.config.radii;
+                }
+                else if (!!!self.settings.radii) {
+                    var ymax = Math.floor((self.settings.height - self.settings.titleheight - fontheight * 2) / 2);
+                    var xmax = Math.floor((self.settings.width - self.settings.outlinelong * 3) / 2);
+                    self.settings.radii = Math.min(xmax, ymax);
+                }
+                //求指示文本起点集合
+                var outpoints = [];
+                for (var index = 1; index < self.drawdata.length ; index++) {
+                    var point = {
+                        x: self.settings.centerpoint.x + Math.floor(Math.cos((self.drawdata[index - 1] + self.drawdata[index]) / 2) * self.settings.radii),
+                        y: self.settings.centerpoint.y + Math.floor(Math.sin((self.drawdata[index - 1] + self.drawdata[index]) / 2) * self.settings.radii)
+                    };
+                    outpoints.push(point);
+                }
+                self.outpoints = outpoints;
+            }
 
         },
         Getdrawdata: function () {//求直接用于画图的数据和文本
@@ -207,18 +248,38 @@
                 var outpoints = self.outpoints;
                 ctx.beginPath();
                 ctx.font = settings.font;
-                ctx.textAlign = "left";
                 var charheight = Number(self.settings.font.substring(0, self.settings.font.indexOf("px"))) + 5;
                 for (var index = 0; index < outpoints.length; index++) {
-                    ctx.moveTo(outpoints[index].start.x, outpoints[index].start.y);
-                    ctx.lineTo(outpoints[index].end.x, outpoints[index].end.y);
-                    ctx.lineTo(outpoints[index].end.x + 60, outpoints[index].end.y)
-                    ctx.stroke();
-                    var texty = outpoints[index].end.y - 5;
-                    if (outpoints[index].start.y < outpoints[index].end.y) {
-                        texty = outpoints[index].end.y + charheight;
+                    var startx = outpoints[index].start.x;
+                    var starty = outpoints[index].start.y;
+                    var endx = outpoints[index].end.x;
+                    var endy = outpoints[index].end.y;
+                    if (index == self.currentpart) {
+                        var xmoved = Math.floor(Math.cos((self.drawdata[index] + self.drawdata[index + 1]) / 2) * 10);
+                        var ymoved = Math.floor(Math.sin((self.drawdata[index] + self.drawdata[index + 1]) / 2) * 10);
+                        startx = startx + xmoved;
+                        starty = starty + ymoved;
+                        endx = endx + xmoved;
+                        endy = endy + ymoved;
                     }
-                    ctx.fillText(self.drawstrs[index], outpoints[index].end.x, texty);
+                    ctx.moveTo(startx, starty);
+                    ctx.lineTo(endx, endy);
+                    if (startx <= endx) {
+                        ctx.lineTo(endx + 60, endy);
+                    }
+                    else {
+                        ctx.lineTo(endx - 60, endy);
+                    }
+                    ctx.stroke();
+                    var texty = endy - 5;
+                    if (starty < endy) {
+                        texty = endy + charheight;
+                    }
+                    ctx.textAlign = "left";
+                    if (startx > endx) {
+                        ctx.textAlign = "right";
+                    }
+                    ctx.fillText(self.drawstrs[index], endx, texty);
                 }
                 //画饼图
                 for (var index = 1; index < self.drawdata.length; index++) {
@@ -236,7 +297,61 @@
                 }
             },
             classics: function (self) {
+                var settings = self.settings;
+                var ctx = self.canvas.getContext("2d");
+                ctx.clearRect(0, 0, settings.width, settings.height);
+                ctx.translate(0, 0);
+                if (!!settings.title) {//标题
+                    ctx.font = settings.titlefont;
+                    ctx.textAlign = "center";
+                    ctx.fillText(settings.title, settings.width / 2, settings.titleheight);
 
+                }
+                var outpoints = self.outpoints;
+                ctx.beginPath();
+                ctx.font = settings.font;
+                var charheight = Number(self.settings.font.substring(0, self.settings.font.indexOf("px"))) + 5;
+                var attry = settings.titleheight + charheight;
+                var attrx = settings.width + charheight - settings.outlinelong;
+                var index = 0;
+                for (var attr in settings.data) {
+                    var startx = outpoints[index].x;
+                    var starty = outpoints[index].y;
+                    if (index == self.currentpart) {
+                        var xmoved = Math.floor(Math.cos((self.drawdata[index] + self.drawdata[index + 1]) / 2) * 10);
+                        var ymoved = Math.floor(Math.sin((self.drawdata[index] + self.drawdata[index + 1]) / 2) * 10);
+                        startx = startx + xmoved;
+                        starty = starty + ymoved;
+                    }
+                    var texty = starty - 5;
+                    if (starty > settings.centerpoint.y) {
+                        texty = starty + charheight;
+                    }
+                    ctx.textAlign = "left";
+                    if (startx < settings.centerpoint.x) {
+                        ctx.textAlign = "right";
+                    }
+                    ctx.fillStyle = "#000";
+                    ctx.fillText(settings.data[attr], startx, texty);
+                    ctx.textAlign = "left";
+                    ctx.fillText(attr, attrx, attry);
+
+                    var x = settings.centerpoint.x;
+                    var y = settings.centerpoint.y;
+                    if (index == self.currentpart) {
+                        x = settings.centerpoint.x + Math.floor(Math.cos((self.drawdata[index] + self.drawdata[index + 1]) / 2) * 10);
+                        y = settings.centerpoint.y + Math.floor(Math.sin((self.drawdata[index] + self.drawdata[index + 1]) / 2) * 10);
+                    }
+                    ctx.beginPath();
+                    ctx.fillStyle = settings.colors[index];
+                    ctx.moveTo(x, y)
+                    ctx.arc(x, y, settings.radii, self.drawdata[index], self.drawdata[index + 1]);
+                    ctx.fill();
+                    ctx.fillRect(attrx - charheight + 2, attry - charheight + 7, charheight - 4, charheight - 4);
+
+                    attry = attry + charheight;
+                    index = index + 1;
+                }
             }
         },
         Draw: function () {//供外部调用的作图方法
