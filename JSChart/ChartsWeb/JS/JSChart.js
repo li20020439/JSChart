@@ -1,4 +1,8 @@
-﻿(function () {
+﻿/******************************************************************************************************************************************************************************************************
+************************************************* Eidt by:AsLand      使用时请保持本文本 **************************************************************************************************************
+************************************************* 如有问题，请邮件：li20020439@qq.com   ***************************************************************************************************************
+******************************************************************************************************************************************************************************************************/
+(function () {
     var _JSChart = {
         _defaultcolors:
             ["#6699cc",
@@ -61,15 +65,18 @@
             this.currentpart = -1;
         },
         ErrMsg: {
-            ContainerErr: "",
-            DataErr: ""
+            ContainerErr: "未指定用于呈现图片的容器或找不到指定的容器！",
+            DataErr: "未提供绘图数据或数据格式存在问题！",
+            StyleErr: "该类图表未实现指定的绘图样式！",
+            ModeErr: "未能找到指定的图表类型！"
         }
     };
     _JSChart.PieCharts.prototype = {
-        _Init: {
+        _Init: {//不同模式下的初始化处理数据的方法。
             default: function (self) {
-                var newcenter = self.config.centerpoint || {};
-                var oldcenter = self.settings.centerpoint || {};
+                //求可用于画图的中心点
+                var newcenter = self.config.centerpoint;
+                var oldcenter = self.settings.centerpoint;
                 if (!!newcenter && !!newcenter.x && !!newcenter.y) {
                     self.settings.centerpoint = newcenter;
                 }
@@ -81,6 +88,7 @@
                     };
                     self.settings.centerpoint = oldcenter;
                 }
+                //求饼状图的半径
                 if (!!self.config.radii) {
                     self.settings.radii = self.config.radii;
                 }
@@ -88,6 +96,7 @@
                     var redii = Math.floor((self.settings.height - self.settings.titleheight - fontheight - self.settings.outlinelong * 2) / 2);
                     self.settings.radii = redii;
                 }
+                //求指示线的点集合
                 var outpoints = [];
                 for (var index = 1; index < self.drawdata.length ; index++) {
                     var points = {
@@ -107,7 +116,7 @@
             classics: function (self) { },
 
         },
-        Getdrawdata: function () {
+        Getdrawdata: function () {//求直接用于画图的数据和文本
             self = this;
             if (!!self.config.data) {
                 var data = self.settings.data = self.config.data;
@@ -137,12 +146,13 @@
             }
 
         },
-        Init: function () {
+        Init: function () {//初始化操作
             var self = this;
+            //画布
             if (!!!self.containerid) {
                 throw "ContainerErr";
             }
-            if (!!!this.canvas) {
+            if (!!!self.canvas) {
                 var container = document.getElementById(self.containerid);
                 if (!!!container) {
                     throw "ContainerErr";
@@ -156,7 +166,9 @@
                     self.canvas = container;
                 }
             }
+            self.canvas.style.position = "relative";
             self.Getdrawdata();
+            //复制属性，若未设置则应用默认值
             for (var attr in self.defaultconfig) {
                 if (!!self.config[attr]) {
                     if (typeof (self.config[attr]) != "object" || !!self.config[attr].length) {
@@ -170,23 +182,28 @@
                     self.settings[attr] = self.defaultconfig[attr];
                 }
             }
+            //细化初始化
             if (!!self._Init[self.settings.style]) {
                 self._Init[self.settings.style](self);
             }
+            else {
+                throw "StyleErr";
+            }
             self.config = null;
         },
-        _Draw: {
+        _Draw: {//画图的详细实现
             default: function (self) {
                 var settings = self.settings;
                 var ctx = self.canvas.getContext("2d");
                 ctx.clearRect(0, 0, settings.width, settings.height);
                 ctx.translate(0, 0);
-                if (!!settings.title) {
+                if (!!settings.title) {//标题
                     ctx.font = settings.titlefont;
                     ctx.textAlign = "center";
                     ctx.fillText(settings.title, settings.width / 2, settings.titleheight);
 
                 }
+                //指示线及文本
                 var outpoints = self.outpoints;
                 ctx.beginPath();
                 ctx.font = settings.font;
@@ -203,45 +220,124 @@
                     }
                     ctx.fillText(self.drawstrs[index], outpoints[index].end.x, texty);
                 }
+                //画饼图
                 for (var index = 1; index < self.drawdata.length; index++) {
-                    if (index - 1 != self.currentpart) {
-                        ctx.beginPath();
-                        ctx.fillStyle = settings.colors[index - 1];
-                        ctx.moveTo(settings.centerpoint.x, settings.centerpoint.y)
-                        ctx.arc(settings.centerpoint.x, settings.centerpoint.y, settings.radii, self.drawdata[index - 1], self.drawdata[index]);
-                        ctx.fill();
+                    var x = settings.centerpoint.x;
+                    var y = settings.centerpoint.y;
+                    if (index - 1 == self.currentpart) {
+                        x = settings.centerpoint.x + Math.floor(Math.cos((self.drawdata[index - 1] + self.drawdata[index]) / 2) * 10);
+                        y = settings.centerpoint.y + Math.floor(Math.sin((self.drawdata[index - 1] + self.drawdata[index]) / 2) * 10);
                     }
+                    ctx.beginPath();
+                    ctx.fillStyle = settings.colors[index - 1];
+                    ctx.moveTo(x, y)
+                    ctx.arc(x, y, settings.radii, self.drawdata[index - 1], self.drawdata[index]);
+                    ctx.fill();
                 }
-                
             },
             classics: function (self) {
 
             }
         },
-        Draw: function () {
+        Draw: function () {//供外部调用的作图方法
             var self = this;
             self.canvas.width = self.settings.width;
             self.canvas.height = self.settings.height;
             if (!!self._Draw[self.settings.style]) {
                 self._Draw[self.settings.style](self);
             }
+            var ctx = self.canvas.getContext("2d");
+            ctx.beginPath();
+            ctx.font = self.settings.font;
+            ctx.fillStyle = "#666";
+            ctx.textAlign = "right";
+            ctx.fillText("by JSChart", self.settings.width, self.settings.height - 5);
+        },
+        Event: function () {//事件挂载，目前只实现一种动态效果
+            var self = this;
+            self.canvas.addEventListener("mousemove", function (e) {
+                var partindex = self.Getpart(e.layerX, e.layerY);
+                if (partindex != self.currentpart) {
+                    self.currentpart = partindex;
+                    self.Draw();
+                }
+            });
+        },
+        Getpart: function (x, y) {//获取当前光标在图的哪一个部份，外部则为-1
+            var self = this;
+            var part = -1;
+            if (self.Isinside(x, y)) {
+                var angle = Math.atan2(y - self.settings.centerpoint.y, x - self.settings.centerpoint.x);
+                if (angle < 0) {
+                    angle = angle + 2 * Math.PI;
+                }
+                for (var index = 1; index < self.drawdata.length; index++) {
+                    if (angle >= self.drawdata[index - 1] && angle < self.drawdata[index]) {
+                        part = index - 1;
+                    }
+                }
+            }
+            return part;
+        },
+        Isinside: function (x, y) {//判断光标是否在饼状图内部
+            var self = this;
+            var xdist = x - self.settings.centerpoint.x;
+            var ydist = y - self.settings.centerpoint.y;
+            var dist = xdist * xdist + ydist * ydist;
+            var rdist = (self.settings.radii + 15) * (self.settings.radii + 15);
+            return dist <= rdist;
+        },
+        Create: function () {//供外部调用的创建方法
+            var self = this;
+            self.Init();
+            self.Draw();
+            self.Event();
+        },
+        Redraw: function (config) {//供外部调用的重画方法
+            var self = this;
+            self.config = config;
+            self.Init();
+            self.Draw();
         }
     };
     var JSChart = window.JSChart = {
         Charts: {},
         Get: function (containerid, mode, config) {
-            var self = this;
-            if (!!self.Charts[containerid]) {
-                return self.Charts[containerid];
+            try {
+                var self = this;
+                if (!!self.Charts[containerid]) {
+                    return self.Charts[containerid];
+                }
+                else {
+                    if (!!mode && !!_JSChart[mode]) {
+                        var chart = new _JSChart[mode](containerid, config);
+                        chart.Create();
+                        self.Charts[containerid] = chart;
+                        return chart;
+                    }
+                    else {
+                        throw "ModeErr";
+                    }
+                }
             }
-            else {
-                if (!!_JSChart[mode]) {
-                    var chart = new _JSChart[mode](containerid, config);
-                    chart.Init();
-                    chart.Draw();
-                    self.Charts[containerid] = chart;
+            catch (e) {
+                alert(_JSChart.ErrMsg[e]);
+            }
+        },
+        Redraw: function (containerid, config) {
+            try {
+                var self = this;
+                if (!!!self.Charts[containerid]) {
+                    throw "ContainerErr";
+                }
+                else {
+                    var chart = self.Charts[containerid];
+                    chart.Redraw(config);
                     return chart;
                 }
+            }
+            catch (e) {
+                alert(_JSChart.ErrMsg[e]);
             }
         }
     };

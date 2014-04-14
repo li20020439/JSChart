@@ -8,12 +8,17 @@
 <body>
     <div id="txtDiv">
     </div>
-    <div id="div2"></div>
+    <input type="button" value="点击切换" id="btn1" />
     <script type="text/javascript">
         var config = { data: { "第一季度": 400, "第二季度": 450, "第三季度": 480, "第四季度": 510 }, title: "2010年各季度统计" };
         JSChart.Get("txtDiv", "PieCharts", config);
-        var config2 = { data: { "第一季度": 400, "第二季度": 400, "第三季度": 400, "第四季度": 400 }, title: "2011年各季度统计" };
-        JSChart.Get("div2", "PieCharts", config2);
+        var btn = document.getElementById("btn1");
+        btn.addEventListener("click", function () {
+            var config2 = { data: { "第一季度": 400, "第二季度": 400, "第三季度": 400, "第四季度": 400 }, title: "2011年各季度统计" };
+            JSChart.Redraw("txtDiv", config2);
+        })
+
+
     </script>
 </body>
 </html>
