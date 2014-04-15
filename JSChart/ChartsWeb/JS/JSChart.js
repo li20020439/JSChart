@@ -141,7 +141,7 @@
                 }
                 else if (!!!self.settings.radii) {
                     var ymax = Math.floor((self.settings.height - self.settings.titleheight - fontheight * 2) / 2);
-                    var xmax = Math.floor((self.settings.width - self.settings.outlinelong * 3) / 2);
+                    var xmax = Math.floor((self.settings.width - self.settings.outlinelong * 2) / 2);
                     self.settings.radii = Math.min(xmax, ymax);
                 }
                 //求指示文本起点集合
