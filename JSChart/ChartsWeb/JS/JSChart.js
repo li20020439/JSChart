@@ -114,7 +114,7 @@
                 }
                 self.outpoints = outpoints;
             },
-            classics: function (self) {
+            classic: function (self) {
                 var fontheight = Number(self.settings.font.substring(0, self.settings.font.indexOf("px"))) + 5;
                 //求外部文本的最大长度
                 var outlinelong = 0;
@@ -154,8 +154,8 @@
                     outpoints.push(point);
                 }
                 self.outpoints = outpoints;
-            }
-
+            },
+            
         },
         Getdrawdata: function () {//求直接用于画图的数据和文本
             self = this;
@@ -296,7 +296,7 @@
                     ctx.fill();
                 }
             },
-            classics: function (self) {
+            classic: function (self) {
                 var settings = self.settings;
                 var ctx = self.canvas.getContext("2d");
                 ctx.clearRect(0, 0, settings.width, settings.height);
