@@ -1,8 +1,8 @@
 ﻿/******************************************************************************************************************************************************************************************************
-************************************************* Eidt by:AsLand      使用时请保持本文本 **************************************************************************************************************
+************************************************* Eidt by:Lsh     使用时请保持本文本 **************************************************************************************************************
 ************************************************* 如有问题，请邮件：li20020439@qq.com   ***************************************************************************************************************
 ******************************************************************************************************************************************************************************************************/
-(function () {
+(function (w) {
     var _JSChart = {
         _defaultcolors:
             ["#6699cc",
@@ -68,7 +68,9 @@
             ContainerErr: "未指定用于呈现图片的容器或找不到指定的容器！",
             DataErr: "未提供绘图数据或数据格式存在问题！",
             StyleErr: "该类图表未实现指定的绘图样式！",
-            ModeErr: "未能找到指定的图表类型！"
+            ModeErr: "未能找到指定的图表类型！",
+            ExpandErr: "扩展方法为空或已存在相应的图表类型！",
+
         }
     };
     _JSChart.PieCharts.prototype = {
@@ -512,7 +514,7 @@
             self.Draw();
         }
     };
-    var JSChart = window.JSChart = {
+    var JSChart = w.JSChart = {
         Charts: {},
         Get: function (containerid, mode, config) {
             try {
@@ -551,7 +553,43 @@
             catch (e) {
                 alert(_JSChart.ErrMsg[e]);
             }
+        },
+        Expand: function (mode, obj) {
+            try {
+                if (!!mode && !!!_JSChart[mode] && !!obj) {
+                    _JSChart[mode] = obj;
+                }
+                else {
+                    throw "ExpandErr";
+                }
+            }
+            catch (e) {
+                alert(_JSChart.ErrMsg[e])
+            }
+        },
+        ExpandStyle: function (mode, style, obj) {
+            try {
+                if (!!mode && !!_JSChart[mode] && !!style && !!!_JSChart[mode].prototype._Init[style] && !!obj) {
+                    if (!!obj.Init && typeof (obj.Init) == "function") {
+                        _JSChart[mode].prototype._Init[style] = obj.Init;
+                    }
+                    else {
+                        _JSChart[mode].prototype._Init[style] = _JSChart[mode].prototype._Init.default;
+                    }
+                    if (!!obj.Draw && typeof (obj.Draw) == "function") {
+                        _JSChart[mode].prototype._Draw[style] == obj.Draw;
+                    }
+                    else {
+                        _JSChart[mode].prototype._Draw[style] == _JSChart[mode].prototype._Draw.default;
+                    }
+                }
+                else {
+                    throw "ExpandErr";
+                }
+            } catch (e) {
+                alert(_JSChart.ErrMsg[e])
+            }
         }
     };
 
-})()
+})(window);
